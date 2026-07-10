@@ -86,5 +86,5 @@ export async function proxy(req) {
 }
 
 export const config = {
-  matcher: ['/settings/:path*', '/api/:path*', '/login', '/signup', '/forgot-password', '/reset-password'],
+  matcher: ['/settings/:path*', '/api/:path*', '/login',  '/forgot-password', '/reset-password'],
 }

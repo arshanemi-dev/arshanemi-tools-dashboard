@@ -3,10 +3,6 @@
 import { LogOut } from 'lucide-react';
 import UserMenu from './UserMenu';
 
-function roleLabel(role) {
-  if (!role) return 'Member';
-  return role.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-}
 
 export default function DashboardTopbar({ user, onLogout, loggingOut }) {
   const name = user?.name || 'there';
