@@ -10,80 +10,81 @@ import {
 } from 'lucide-react'
 
 const masterAdminGroups = [
-  {
-    label: null,
-    items: [{ label: 'Dashboard', href: '/settings', icon: LayoutDashboard }],
-  },
-  {
-    label: 'SERVICES',
-    items: [
-      { label: 'Services', href: '/settings/services', icon: Briefcase },
-    ],
-  },
-  {
-    label: 'Industries & Content',
-    items: [
-      { label: 'Industries',      href: '/settings/industries',      icon: Factory },
-       { label: 'SEO Packages',   href: '/settings/seo-packages',     icon: Package },
-    ],
-  },
-  {
-    label: 'CONTENT',
-    items: [
-      { label: 'Blog Posts',      href: '/settings/blogs',           icon: FileText },
-      { label: 'Blog Categories', href: '/settings/blog-categories', icon: Tag },
-      { label: 'Case Studies',    href: '/settings/case-studies',    icon: BookOpen },
-      { label: 'Media Library',   href: '/settings/media',           icon: Images },
-    ],
-  },
+  // {
+  //   label: null,
+  //   items: [{ label: 'Dashboard', href: '/settings', icon: LayoutDashboard }],
+  // },
+  // {
+  //   label: 'Industries & Content',
+  //   items: [
+  //     { label: 'Industries',      href: '/settings/industries',      icon: Factory },
+  //      { label: 'SEO Packages',   href: '/settings/seo-packages',     icon: Package },
+  //   ],
+  // },
+  // {
+  //   label: 'CONTENT',
+  //   items: [
+  //     { label: 'Blog Posts',      href: '/settings/blogs',           icon: FileText },
+  //     { label: 'Blog Categories', href: '/settings/blog-categories', icon: Tag },
+  //     { label: 'Case Studies',    href: '/settings/case-studies',    icon: BookOpen },
+  //     { label: 'Media Library',   href: '/settings/media',           icon: Images },
+  //   ],
+  // },
   {
     label: 'COMPANIES & USERS',
     items: [
       { label: 'Companies',     href: '/settings/companies', icon: Building2 },
       { label: 'Users',         href: '/settings/users',     icon: Users },
+      
       { label: 'Tools Access',  href: '/settings/tools',  icon: Settings },
     ],
   },
-  {
-    label: 'LEADS & HR',
+  // {
+  //   label: 'LEADS & HR',
+  //   items: [
+  //     { label: 'Leads History',      href: '/settings/leads',      icon: TrendingUp },
+  //     { label: 'Candidates',         href: '/settings/candidates', icon: UserCheck },
+  //   ],
+  // },
+  // {
+  //   label: 'TEAM & SOCIAL',
+  //   items: [
+  //     { label: 'Team Members', href: '/settings/team',         icon: Users },
+  //     { label: 'Testimonials', href: '/settings/testimonials', icon: MessageSquare },
+  //     { label: 'Partners',     href: '/settings/partners',     icon: Handshake },
+  //   ],
+  // },
+    {
+    label: 'SERVICES',
     items: [
-      { label: 'Leads History',      href: '/settings/leads',      icon: TrendingUp },
-      { label: 'Candidates',         href: '/settings/candidates', icon: UserCheck },
-    ],
-  },
-  {
-    label: 'TEAM & SOCIAL',
-    items: [
-      { label: 'Team Members', href: '/settings/team',         icon: Users },
-      { label: 'Testimonials', href: '/settings/testimonials', icon: MessageSquare },
-      { label: 'Partners',     href: '/settings/partners',     icon: Handshake },
+      { label: 'Tools', href: '/settings/tools-catalog', icon: Briefcase },
     ],
   },
   {
     label: 'SITE CONFIG',
     items: [
-      { label: 'Stats',          href: '/settings/stats',      icon: BarChart2 },
-      { label: 'FAQs',           href: '/settings/faqs',       icon: HelpCircle },
-      { label: 'Trust Badges',   href: '/settings/badges',     icon: Shield },
-      { label: 'Hero Content',   href: '/settings/hero',       icon: Layers },
-      { label: 'CTA Banner',     href: '/settings/cta-banner', icon: Megaphone },
-      { label: 'Company Info',   href: '/settings/company',    icon: Cog },
+      // { label: 'Stats',          href: '/settings/stats',      icon: BarChart2 },
+      // { label: 'FAQs',           href: '/settings/faqs',       icon: HelpCircle },
+      // { label: 'Trust Badges',   href: '/settings/badges',     icon: Shield },
+      // { label: 'Hero Content',   href: '/settings/hero',       icon: Layers },
+      // { label: 'CTA Banner',     href: '/settings/cta-banner', icon: Megaphone },
+      // { label: 'Company Info',   href: '/settings/company',    icon: Cog },
       { label: 'Theme Settings', href: '/settings/theme',      icon: Palette },
     ],
   },
-  {
-    label: 'PAGES',
-    items: [
-      { label: 'About Page',     href: '/settings/about',            icon: Layers },
-      { label: 'Process Steps',  href: '/settings/process',          icon: Settings },
+  // {
+  //   label: 'PAGES',
+  //   items: [
+  //     { label: 'About Page',     href: '/settings/about',            icon: Layers },
+  //     { label: 'Process Steps',  href: '/settings/process',          icon: Settings },
 
-      { label: 'Careers',        href: '/settings/careers',          icon: Briefcase },
-      { label: 'Life at Arshanemi',href: '/settings/life-at-arshanemi',  icon: Heart },
-      { label: 'Contact Page',   href: '/settings/contact',          icon: Phone },
-      { label: 'Navigation',     href: '/settings/navigation',       icon: Map },
+  //     { label: 'Careers',        href: '/settings/careers',          icon: Briefcase },
+  //     { label: 'Life at Arshanemi',href: '/settings/life-at-arshanemi',  icon: Heart },
+  //     { label: 'Contact Page',   href: '/settings/contact',          icon: Phone },
+  //     { label: 'Navigation',     href: '/settings/navigation',       icon: Map },
 
-    ],
-  },
+  //   ],
+  // },
   {
     label: 'ACCOUNT',
     items: [
