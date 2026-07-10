@@ -104,7 +104,17 @@ const adminGroups = [
   },
 ]
 
+const userGroups = [
+  {
+    label: null,
+    items: [
+      { label: 'My Profile',   href: '/settings/profile',  icon: UserCircle },
+    ],
+  },
+]
+
 export default function Sidebar({ role = 'master_admin' }) {
+  console.log('Sidebar role:', role)
   const pathname = usePathname()
   const groups = role === 'admin' ? adminGroups : masterAdminGroups
 
