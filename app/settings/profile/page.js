@@ -11,7 +11,7 @@ import { COUNTRIES, DEFAULT_COUNTRY, INDIA_STATES } from '@/data/geoIndia'
 const TABS = [
   { id: 'profile', label: 'Profile' },
   { id: 'setting', label: 'Setting' },
-  { id: 'tokenUse', label: 'Subscription' },
+  // { id: 'tokenUse', label: 'Subscription' },
 ]
 
 const SUBSCRIPTION_STATUS_STYLES = {
