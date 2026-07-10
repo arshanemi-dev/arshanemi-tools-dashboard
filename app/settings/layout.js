@@ -55,7 +55,7 @@ export default async function AdminLayout({ children }) {
         <div className="flex flex-col h-screen overflow-hidden bg-surface">
           <Topbar username={payload.name} />
           <main className="flex-1 overflow-y-auto flex justify-center">
-            <div className="p-6 lg:p-8 w-full max-w-2xl">{children}</div>
+            <div className="p-6 lg:p-8 w-full max-w-[50vw]">{children}</div>
           </main>
         </div>
       </ToastProvider>

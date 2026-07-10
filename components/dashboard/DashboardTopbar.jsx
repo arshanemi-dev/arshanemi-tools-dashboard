@@ -1,6 +1,7 @@
 'use client';
 
 import { LogOut } from 'lucide-react';
+import UserMenu from './UserMenu';
 
 function roleLabel(role) {
   if (!role) return 'Member';
@@ -22,24 +23,18 @@ export default function DashboardTopbar({ user, onLogout, loggingOut }) {
         </a>
 
         <div className="flex items-center gap-3">
-          <div className="hidden items-center gap-2.5 border-r border-divider pr-3 sm:flex">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-accent to-cyan text-xs font-bold text-background">
-              {initial}
-            </span>
-            <div className="leading-tight">
-              <p className="text-sm font-semibold text-foreground">{name}</p>
-              <p className="text-[11px] text-subtle">{roleLabel(user?.role)}</p>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={onLogout}
-            disabled={loggingOut}
-            className="inline-flex items-center gap-1.5 rounded-full border border-divider px-4 py-2 text-sm font-semibold text-muted transition-colors hover:border-divider-light hover:text-foreground disabled:opacity-60"
-          >
-            <LogOut size={14} />
-            {loggingOut ? 'Signing out…' : 'Log Out'}
-          </button>
+         {user ? (
+                <UserMenu user={user} onLogout={() => setUser(null)} />
+              ) : (
+                <>
+                  <Button href="/login" variant="outline" size="sm" className="hidden sm:inline-flex">
+                    Login
+                  </Button>
+                  <Button href="/contact" size="sm" className="hidden sm:inline-flex">
+                    Get Free Audit
+                  </Button>
+                </>
+              )}
         </div>
       </nav>
     </header>
