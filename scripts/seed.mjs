@@ -152,7 +152,7 @@ async function main() {
   // ── Default master admin + company admin ────────────────────────────────────
   // master_admin has full platform access; the company admin is scoped to
   // DEFAULT_COMPANY (role 'admin'). Regular 'user' accounts are created
-  // through /signup or Admin → Users instead.
+  // through Admin → Users instead.
   console.log('\n👤  Seeding default admin accounts...\n')
 
   const SALT_ROUNDS = 10

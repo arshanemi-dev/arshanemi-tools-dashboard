@@ -29,7 +29,7 @@ export async function proxy(req) {
   const isAdminPath = pathname.startsWith('/settings') || pathname.startsWith('/api/admin')
 
   // Non-admin API routes (e.g. /api/auth/*) and the standalone auth pages
-  // (/login, /signup, ...): inject CORS headers where relevant and pass
+  // (/login, ...): inject CORS headers where relevant and pass
   // through, but still stamp x-pathname so the root layout can tell these
   // full-bleed auth screens apart from regular public pages and skip the
   // site Header/Footer for them.

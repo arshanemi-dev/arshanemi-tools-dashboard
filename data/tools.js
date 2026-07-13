@@ -239,12 +239,12 @@ export const tools = [
 ];
 
 // Default per-role tools access, applied when a user_settings row is first
-// created for a user (at signup, or when seeding default accounts).
+// created for a user (via Admin → Users, or when seeding default accounts).
 // master_admin and admin get every current tool since they're only ever
 // created by an existing admin (and an admin needs tools of their own before
-// they can grant any to their team, per Admin → Settings). A plain 'user' —
-// created via self-signup or Admin → Users — starts with NO tools access at
-// all; an admin has to explicitly grant each one from Admin → Settings.
+// they can grant any to their team, per Admin → Settings). A plain 'user'
+// starts with NO tools access at all; an admin has to explicitly grant each
+// one from Admin → Settings.
 export const defaultToolsAccessByRole = {
   master_admin: tools.map((t) => t.slug),
   admin: tools.map((t) => t.slug),

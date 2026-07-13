@@ -86,10 +86,6 @@ export default function LoginPage() {
           </div>
 
           <h2 className="text-2xl font-bold text-foreground mb-1">Welcome back</h2>
-          {/* <p className="text-muted text-sm mb-8">
-            Sign in to access your tools.&nbsp;
-            <Link href="/signup" className="text-accent hover:underline font-medium">Create account</Link>
-          </p> */}
 
           {error && (
             <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-xl px-4 py-3 mb-5">
@@ -146,11 +142,6 @@ export default function LoginPage() {
               {loading ? <><Loader2 className="animate-spin" size={16} /> Signing in…</> : 'Sign In'}
             </button>
           </form>
-
-          {/* <p className="text-center text-sm text-muted mt-6">
-            Don&apos;t have an account?&nbsp;
-            <Link href="/signup" className="text-accent hover:underline font-medium">Sign up free</Link>
-          </p> */}
         </div>
       </div>
     </div>
