@@ -15,10 +15,10 @@ const API_BASE = 'http://localhost:3000';
 // under the same parent domain.
 // ---------------------------------------------------------------------------
 const AUTH_KEYS = {
-  accessToken: 'admin_access_token',
-  refreshToken: 'admin_refresh_token',
-  expiresAt: 'admin_token_expires_at',
-  user: 'admin_user',
+  accessToken: 'access_token',
+  refreshToken: 'refresh_token',
+  expiresAt: 'token_expires_at',
+  user: 'user',
 };
 
 function saveAuthTokens({ accessToken, refreshToken, expiresIn = 900, user }) {
