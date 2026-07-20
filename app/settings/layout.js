@@ -29,6 +29,12 @@ export default async function AdminLayout({ children }) {
 
   const role = payload.role
 
+  // Plain 'user' role has no admin shell at all — their whole account
+  // experience lives at the public /profile page (main dashboard header),
+  // not inside /settings. Bounce them out before any of the allowlist
+  // checks below even run.
+  if (role === 'user') redirect('/profile')
+
   // Every role below master_admin only gets a fixed slice of the panel.
   // Landing on the bare dashboard sends them to their own home page; any
   // other page outside their allowlist is a 404 — they're logged in, just
@@ -36,21 +42,6 @@ export default async function AdminLayout({ children }) {
   if (role !== 'master_admin') {
     if (pathname === '/settings') redirect(getLandingPageForRole(role))
     if (!isPathAllowed(pathname, role)) notFound()
-  }
-
-  // Plain 'user' role has exactly one page — no sidebar to navigate with.
-  if (role === 'user') {
-    return (
-      <ToastProvider>
-        <SessionManager />
-        <div className="flex flex-col h-screen overflow-hidden bg-surface">
-          <Topbar username={payload.name} role={role} />
-          <main className="flex-1 overflow-y-auto flex justify-center">
-            <div className="p-6 lg:p-8 w-full max-w-[50vw]">{children}</div>
-          </main>
-        </div>
-      </ToastProvider>
-    )
   }
 
   return (

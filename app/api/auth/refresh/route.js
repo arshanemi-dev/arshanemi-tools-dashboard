@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { verifyRefreshToken, signToken, makeAuthCookie } from '@/lib/auth'
+import { verifyRefreshToken, signToken, makeAuthCookie, clearAuthCookie, ADMIN_COOKIE } from '@/lib/auth'
 
 export async function POST(req) {
   try {
@@ -34,7 +34,10 @@ export async function POST(req) {
 
     res.cookies.set(cookie)
     if (payload.role === 'master_admin') {
-      res.cookies.set({ ...cookie, name: 'admin-token' })
+      res.cookies.set({ ...cookie, name: ADMIN_COOKIE })
+    } else {
+      // Same stale-cookie guard as login — see that route for why.
+      res.cookies.set({ ...clearAuthCookie(), name: ADMIN_COOKIE })
     }
 
     return res

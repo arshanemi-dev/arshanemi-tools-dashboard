@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
-import { signToken, signRefreshToken, makeAuthCookie } from '@/lib/auth'
+import { signToken, signRefreshToken, makeAuthCookie, clearAuthCookie, ADMIN_COOKIE } from '@/lib/auth'
 import { getUserByEmail, getUserByMobile, createOTP, verifyOTP } from '@/lib/db'
 import { sendLoginOtpEmail } from '@/lib/mailer'
 
@@ -78,7 +78,13 @@ export async function POST(req) {
 
     res.cookies.set(cookie)
     if (user.role === 'master_admin') {
-      res.cookies.set({ ...cookie, name: 'admin-token' })
+      res.cookies.set({ ...cookie, name: ADMIN_COOKIE })
+    } else {
+      // A stale 'admin-token' cookie from a previous master_admin session on
+      // this browser must not leak into this login — /settings/layout.js
+      // reads 'admin-token' first, so without this a regular user signing in
+      // right after a master_admin would still be treated as master_admin.
+      res.cookies.set({ ...clearAuthCookie(), name: ADMIN_COOKIE })
     }
 
     return res

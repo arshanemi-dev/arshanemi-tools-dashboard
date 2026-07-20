@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { Settings, LogOut } from 'lucide-react';
+import { User as UserIcon, LogOut } from 'lucide-react';
 import { clearAuthTokens } from '@/lib/tokenStore';
 
 export default function UserMenu({ user, onLogout }) {
@@ -74,12 +74,12 @@ function roleLabel(role) {
           </div>
           <div className="py-2">
             <Link
-              href="/settings"
+              href="/profile"
               onClick={() => setOpen(false)}
               className="flex items-center gap-3 px-4 py-2.5 text-sm text-muted hover:text-foreground hover:bg-card-hover transition-colors"
             >
-              <Settings size={16} />
-              Settings
+              <UserIcon size={16} />
+              Profile
             </Link>
             <button
               onClick={handleLogout}
