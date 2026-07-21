@@ -3,10 +3,13 @@ import bcrypt from 'bcryptjs'
 import { signToken, signRefreshToken, makeAuthCookie, clearAuthCookie, ADMIN_COOKIE } from '@/lib/auth'
 import { getUserByEmail, getUserByMobile, createOTP, verifyOTP } from '@/lib/db'
 import { sendLoginOtpEmail } from '@/lib/mailer'
+import { IS_CONNECT, proxyAuthCall } from '@/lib/connect'
 
 function generateOTP() {
   return Math.floor(100000 + Math.random() * 900000).toString()
 }
+
+const OTP_DISABLED = process.env.NEXT_PUBLIC_IS_OTP_Verifications_Disable === 'true'
 
 export async function POST(req) {
   const { identifier, password, username, otpCode } = await req.json()
@@ -16,6 +19,27 @@ export async function POST(req) {
 
   if (!id || (!password && !otpCode)) {
     return NextResponse.json({ error: 'Identifier and password required' }, { status: 400 })
+  }
+
+  // Connected mode: proxy credentials to the root admin panel and hand its
+  // issued tokens back to the browser as-is. Requires this app's JWT_SECRET /
+  // JWT_REFRESH_SECRET to match root's — see .env.example — so the tokens
+  // issued here also verify against this app's own /settings SSR gate
+  // (app/settings/layout.js + proxy.js), which still checks locally.
+  if (IS_CONNECT) {
+    const { status, data } = await proxyAuthCall('/api/auth/login', { body: { identifier: id, password, otpCode } })
+    if (data.otpRequired) return NextResponse.json(data, { status })
+    if (status !== 200 || !data.ok) {
+      return NextResponse.json({ error: data.error || 'Invalid credentials' }, { status: status || 401 })
+    }
+    const res = NextResponse.json(data)
+    res.cookies.set(makeAuthCookie(data.accessToken))
+    if (data.user?.role === 'master_admin') {
+      res.cookies.set({ ...makeAuthCookie(data.accessToken), name: ADMIN_COOKIE })
+    } else {
+      res.cookies.set({ ...clearAuthCookie(), name: ADMIN_COOKIE })
+    }
+    return res
   }
 
   try {
@@ -28,8 +52,11 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
     }
 
-    // OTP-gated login: always required for master_admin, optional per-user otherwise
-    const otpRequired = user.role === 'master_admin' || !!user.otp_enabled
+    // OTP-gated login: always required for master_admin, optional per-user otherwise —
+    // unless OTP verification is globally disabled, in which case login is
+    // password-only for every role and the /login and /settings/login OTP
+    // step never renders (they're both driven off this same otpRequired flag).
+    const otpRequired = !OTP_DISABLED && (user.role === 'master_admin' || !!user.otp_enabled)
 
     if (otpCode) {
       // Step 2: verifying the login OTP

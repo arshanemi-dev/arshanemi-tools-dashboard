@@ -3,6 +3,7 @@ import { getUserFromRequest } from '@/lib/auth'
 import { getUserByEmail, getUserByMobile, createOTP } from '@/lib/db'
 import { sendContactChangeOtpEmail } from '@/lib/mailer'
 import { sendSmsOtp } from '@/lib/sms'
+import { IS_CONNECT, proxyAuthCall, authHeaderFrom } from '@/lib/connect'
 
 function generateOTP() {
   return Math.floor(100000 + Math.random() * 900000).toString()
@@ -12,6 +13,12 @@ function generateOTP() {
 // switch to (proving they own it) — distinct from /api/auth/send-otp, which
 // only ever targets an identifier already on file (password reset / login).
 export async function POST(req) {
+  if (IS_CONNECT) {
+    const body = await req.json()
+    const { status, data } = await proxyAuthCall('/api/auth/send-contact-otp', { body, authHeader: authHeaderFrom(req) })
+    return NextResponse.json(data, { status })
+  }
+
   const payload = await getUserFromRequest(req)
   if (!payload) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 

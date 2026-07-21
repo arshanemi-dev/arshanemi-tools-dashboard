@@ -3,8 +3,11 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { defaultTheme } from '@/data/defaultTheme'
 
-const IS_CONNECT      = process.env.NEXT_PUBLIC_IS_CONNECT?.toLowerCase() === 'true'
-const THEME_CACHE_KEY = 'si-theme-config'
+// Same key the anti-FOUC inline <Script id="theme-init"> in app/layout.js
+// reads before hydration — must match, or that script never finds this
+// provider's cached theme and always falls back to the hardcoded dark theme
+// for a flash before this effect runs.
+const THEME_CACHE_KEY = 'arshanemi-theme-config'
 const THEME_CACHE_TTL = 10 * 60 * 1000 // 10 min
 
 const ThemeContext = createContext({ theme: 'dark', siteTheme: defaultTheme })
@@ -78,25 +81,9 @@ export function ThemeProvider({ children }) {
   const [siteTheme, setSiteTheme] = useState(defaultTheme)
 
   useEffect(() => {
-    if (!IS_CONNECT) {
-      // Local / disconnected mode — try localStorage cache, else use code defaults
-      try {
-        const raw = localStorage.getItem(THEME_CACHE_KEY)
-        if (raw) {
-          const { data, ts } = JSON.parse(raw)
-          if (Date.now() - ts < THEME_CACHE_TTL && data?.mode) {
-            setSiteTheme(data)
-            applyFullTheme(data)
-            return
-          }
-        }
-      } catch {}
-      // No cache — just apply defaultTheme from code (no API call)
-      applyFullTheme(defaultTheme)
-      return
-    }
-
-    // Connected mode — try localStorage cache first to avoid FOUC on navigation
+    // Cached theme applies instantly (avoids FOUC while the fresh fetch below
+    // runs) — same cache + key the inline <Script> in app/layout.js reads
+    // before hydration.
     try {
       const raw = localStorage.getItem(THEME_CACHE_KEY)
       if (raw) {
@@ -104,12 +91,15 @@ export function ThemeProvider({ children }) {
         if (Date.now() - ts < THEME_CACHE_TTL && data?.mode) {
           setSiteTheme(data)
           applyFullTheme(data)
-          return
         }
       }
     } catch {}
 
-    // Fetch from API
+    // Always fire this first, on every hard reload — /api/admin/theme is
+    // itself connect-mode aware (see app/api/admin/theme/route.js: proxies to
+    // the root admin panel when NEXT_PUBLIC_IS_CONNECT=true, reads this app's
+    // own local Supabase singleton otherwise), so the client never needs to
+    // know which mode it's in.
     fetch('/api/admin/theme')
       .then(r => r.json())
       .then(data => {
@@ -118,7 +108,7 @@ export function ThemeProvider({ children }) {
         localStorage.setItem(THEME_CACHE_KEY, JSON.stringify({ data, ts: Date.now() }))
       })
       .catch(() => {
-        // globals.css defaults are already active — nothing to do
+        // Cached theme (if any) or globals.css defaults stay active
       })
   }, [])
 

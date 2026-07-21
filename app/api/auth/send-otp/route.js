@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getUserByEmail, getUserByMobile, createOTP } from '@/lib/db'
 import { sendOtpEmail } from '@/lib/mailer'
 import { sendSmsOtp } from '@/lib/sms'
+import { IS_CONNECT, proxyAuthCall } from '@/lib/connect'
 
 function generateOTP() {
   return Math.floor(100000 + Math.random() * 900000).toString()
@@ -9,6 +10,11 @@ function generateOTP() {
 
 export async function POST(req) {
   const { identifier, type } = await req.json()
+
+  if (IS_CONNECT) {
+    const { status, data } = await proxyAuthCall('/api/auth/send-otp', { body: { identifier, type } })
+    return NextResponse.json(data, { status })
+  }
 
   if (!identifier?.trim()) return NextResponse.json({ error: 'Identifier required' }, { status: 400 })
   if (!['email', 'mobile'].includes(type)) return NextResponse.json({ error: 'Type must be email or mobile' }, { status: 400 })

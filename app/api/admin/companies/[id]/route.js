@@ -2,12 +2,19 @@ import { NextResponse } from 'next/server'
 import { getAdminFromRequest } from '@/lib/auth'
 import { getCompanyById, updateCompany, deleteCompany, getUsersByCompany, getCompanyByEmail } from '@/lib/db'
 import { migrateCompanyFolder } from '@/lib/media'
+import { IS_CONNECT, proxyAdminCall } from '@/lib/connect'
 
 export async function GET(req, { params }) {
   const admin = await getAdminFromRequest(req)
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await params
+
+  if (IS_CONNECT) {
+    const { status, data } = await proxyAdminCall(`/api/admin/companies/${id}`)
+    return NextResponse.json(data, { status })
+  }
+
   const company = await getCompanyById(id)
   if (!company) return NextResponse.json({ error: 'Company not found' }, { status: 404 })
 
@@ -21,6 +28,11 @@ export async function PATCH(req, { params }) {
 
   const { id } = await params
   const updates = await req.json()
+
+  if (IS_CONNECT) {
+    const { status, data } = await proxyAdminCall(`/api/admin/companies/${id}`, { method: 'PATCH', body: updates })
+    return NextResponse.json(data, { status })
+  }
 
   // If email is being changed, enforce uniqueness
   if (updates.email) {
@@ -53,6 +65,12 @@ export async function DELETE(req, { params }) {
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await params
+
+  if (IS_CONNECT) {
+    const { status, data } = await proxyAdminCall(`/api/admin/companies/${id}`, { method: 'DELETE' })
+    return NextResponse.json(data, { status })
+  }
+
   const company = await getCompanyById(id)
   if (!company) return NextResponse.json({ error: 'Company not found' }, { status: 404 })
 

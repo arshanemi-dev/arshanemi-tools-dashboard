@@ -51,7 +51,7 @@ export default async function AdminLayout({ children }) {
       <div className="flex h-screen overflow-hidden bg-surface">
         <Sidebar role={role} />
         <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-          <Topbar username={payload.name} />
+          <Topbar username={payload.name} email={payload.email} role={role} />
           <main className="flex-1 overflow-y-auto">
             <div className="p-6 lg:p-8 max-w-screen-2xl">{children}</div>
           </main>

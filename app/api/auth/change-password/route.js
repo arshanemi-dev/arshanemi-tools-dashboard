@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs'
 import { getUserFromRequest } from '@/lib/auth'
 import { getUserById, updateUserPassword, verifyOTP } from '@/lib/db'
 import { validatePassword } from '@/lib/validation'
+import { IS_CONNECT, proxyAuthCall, authHeaderFrom } from '@/lib/connect'
 
 // Logged-in self-service password change — requires BOTH the current
 // password (something you know) AND a fresh OTP to an on-file email/mobile
@@ -10,6 +11,12 @@ import { validatePassword } from '@/lib/validation'
 // /api/auth/reset-password, which is the "forgot password" flow and
 // deliberately doesn't know the old password.
 export async function POST(req) {
+  if (IS_CONNECT) {
+    const body = await req.json()
+    const { status, data } = await proxyAuthCall('/api/auth/change-password', { body, authHeader: authHeaderFrom(req) })
+    return NextResponse.json(data, { status })
+  }
+
   const payload = await getUserFromRequest(req)
   if (!payload) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { revalidateTag, revalidatePath } from 'next/cache'
 import { getAdminFromRequest } from '@/lib/auth'
 import { getToolByIdFromDB, updateTool, deleteTool } from '@/lib/db'
+import { IS_CONNECT, proxyAdminCall } from '@/lib/connect'
 
 function revalidatePublicPages(item) {
   revalidatePath('/', 'layout')
@@ -16,6 +17,12 @@ export async function GET(req, { params }) {
   const admin = await getAdminFromRequest(req)
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const { id } = await params
+
+  if (IS_CONNECT) {
+    const { status, data } = await proxyAdminCall(`/api/admin/tools/${id}`)
+    return NextResponse.json(data, { status })
+  }
+
   const tool = await getToolByIdFromDB(id)
   if (!tool) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   return NextResponse.json(tool)
@@ -26,6 +33,16 @@ export async function PUT(req, { params }) {
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const { id } = await params
   const data = await req.json()
+
+  if (IS_CONNECT) {
+    const { status, data: resData } = await proxyAdminCall(`/api/admin/tools/${id}`, { method: 'PUT', body: data })
+    if (status < 300) {
+      revalidateTag('tools')
+      revalidatePublicPages(resData)
+    }
+    return NextResponse.json(resData, { status })
+  }
+
   const updated = await updateTool(id, data)
   if (!updated) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   revalidateTag('tools')
@@ -37,6 +54,16 @@ export async function DELETE(req, { params }) {
   const admin = await getAdminFromRequest(req)
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const { id } = await params
+
+  if (IS_CONNECT) {
+    const { status, data } = await proxyAdminCall(`/api/admin/tools/${id}`, { method: 'DELETE' })
+    if (status < 300) {
+      revalidateTag('tools')
+      revalidatePublicPages(null)
+    }
+    return NextResponse.json(data, { status })
+  }
+
   const item = await getToolByIdFromDB(id)
   await deleteTool(id)
   revalidateTag('tools')

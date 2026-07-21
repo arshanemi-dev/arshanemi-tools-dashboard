@@ -5,13 +5,17 @@ import Modal from './Modal'
 import FormField from './FormField'
 
 const OTP_SECONDS = 60
+const OTP_DISABLED = process.env.NEXT_PUBLIC_IS_OTP_Verifications_Disable === 'true'
 
 // Self-service, OTP-gated password reset — reuses the existing
 // send-otp / verify-otp / reset-password endpoints unchanged.
 // Pass `identifier` when the caller already knows the user's email (e.g. the
 // Profile page's "Change Password" button) to skip straight to the OTP step;
 // omit it to ask the visitor for their email/mobile first (login page's
-// "Forgot password?" flow).
+// "Forgot password?" flow). When NEXT_PUBLIC_IS_OTP_Verifications_Disable is
+// true, the 'otp' step is skipped entirely — identifier goes straight to
+// verify-otp with a dummy code (the backend's verifyOTP() bypasses
+// unconditionally) to fetch the resetToken and land on 'password'.
 export default function OtpPasswordResetModal({ open, identifier: fixedIdentifier, onClose, onDone }) {
   const [step, setStep] = useState('identifier') // identifier | otp | password | done
   const [identifier, setIdentifier] = useState(fixedIdentifier || '')
@@ -54,6 +58,26 @@ export default function OtpPasswordResetModal({ open, identifier: fixedIdentifie
     if (!id?.trim()) return
     setError('')
     setLoading(true)
+
+    if (OTP_DISABLED) {
+      try {
+        const res = await fetch('/api/auth/verify-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ identifier: id.trim(), otpCode: '000000' }),
+        })
+        const data = await res.json()
+        if (!res.ok) { setError(data.error || 'Could not verify identity'); return }
+        setResetToken(data.resetToken)
+        setStep('password')
+      } catch {
+        setError('Network error — please try again')
+      } finally {
+        setLoading(false)
+      }
+      return
+    }
+
     try {
       const type = id.includes('@') ? 'email' : 'mobile'
       const res = await fetch('/api/auth/send-otp', {
@@ -146,7 +170,9 @@ export default function OtpPasswordResetModal({ open, identifier: fixedIdentifie
             disabled={loading || !identifier.trim()}
             className="w-full bg-accent hover:bg-accent-hover text-white font-medium py-2.5 rounded-xl text-sm transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
           >
-            {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Sending…</> : 'Send OTP'}
+            {loading
+              ? <><Loader2 className="w-4 h-4 animate-spin" /> {OTP_DISABLED ? 'Continuing…' : 'Sending…'}</>
+              : OTP_DISABLED ? 'Continue' : 'Send OTP'}
           </button>
         </>
       )}

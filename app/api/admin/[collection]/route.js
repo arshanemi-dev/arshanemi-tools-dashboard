@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { revalidateTag, revalidatePath } from 'next/cache'
 import { getCollection, createItem } from '@/lib/db'
+import { IS_CONNECT, proxyAdminCall } from '@/lib/connect'
 
 const NO_CACHE = { 'Cache-Control': 'no-store, no-cache, must-revalidate' }
 
@@ -27,6 +28,10 @@ function revalidatePublicPages(collection, item) {
 
 export async function GET(req, { params }) {
   const { collection } = await params
+  if (IS_CONNECT) {
+    const { status, data } = await proxyAdminCall(`/api/admin/${collection}`)
+    return NextResponse.json(data, { status, headers: NO_CACHE })
+  }
   const data = await getCollection(collection)
   return NextResponse.json(data, { headers: NO_CACHE })
 }
@@ -34,6 +39,16 @@ export async function GET(req, { params }) {
 export async function POST(req, { params }) {
   const { collection } = await params
   const body = await req.json()
+
+  if (IS_CONNECT) {
+    const { status, data } = await proxyAdminCall(`/api/admin/${collection}`, { method: 'POST', body })
+    if (status < 300) {
+      revalidateTag(collection)
+      revalidatePublicPages(collection, data)
+    }
+    return NextResponse.json(data, { status, headers: NO_CACHE })
+  }
+
   const item = await createItem(collection, body)
   revalidateTag(collection)
   revalidatePublicPages(collection, item)

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { revalidateTag, revalidatePath } from 'next/cache'
 import { getItem, updateItem, deleteItem } from '@/lib/db'
 import { deleteImage } from '@/lib/upload'
+import { IS_CONNECT, proxyAdminCall } from '@/lib/connect'
 
 const IMAGE_FIELDS = {
   team: ['photo'],
@@ -36,6 +37,10 @@ function revalidatePublicPages(collection, item) {
 
 export async function GET(req, { params }) {
   const { collection, id } = await params
+  if (IS_CONNECT) {
+    const { status, data } = await proxyAdminCall(`/api/admin/${collection}/${id}`)
+    return NextResponse.json(data, { status, headers: NO_CACHE })
+  }
   const item = await getItem(collection, id)
   if (!item) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   return NextResponse.json(item, { headers: NO_CACHE })
@@ -44,6 +49,16 @@ export async function GET(req, { params }) {
 export async function PUT(req, { params }) {
   const { collection, id } = await params
   const body = await req.json()
+
+  if (IS_CONNECT) {
+    const { status, data } = await proxyAdminCall(`/api/admin/${collection}/${id}`, { method: 'PUT', body })
+    if (status < 300) {
+      revalidateTag(collection)
+      revalidatePublicPages(collection, data)
+    }
+    return NextResponse.json(data, { status, headers: NO_CACHE })
+  }
+
   const updated = await updateItem(collection, id, body)
   if (!updated) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   revalidateTag(collection)
@@ -53,6 +68,19 @@ export async function PUT(req, { params }) {
 
 export async function DELETE(req, { params }) {
   const { collection, id } = await params
+
+  if (IS_CONNECT) {
+    // No local record to read image fields off of — the item lives on root
+    // now, and any images it references belong to root's blob store, not
+    // this app's. Skip blob cleanup; just proxy the delete.
+    const { status, data } = await proxyAdminCall(`/api/admin/${collection}/${id}`, { method: 'DELETE' })
+    if (status < 300) {
+      revalidateTag(collection)
+      revalidatePublicPages(collection, null)
+    }
+    return NextResponse.json(data, { status, headers: NO_CACHE })
+  }
+
   const item = await getItem(collection, id)
   if (!item) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 

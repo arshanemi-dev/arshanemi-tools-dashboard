@@ -2,9 +2,17 @@ import { NextResponse } from 'next/server'
 import { getUserFromRequest } from '@/lib/auth'
 import { getUserById, getCompanyById, updateUser } from '@/lib/db'
 import { serializeProfile } from '@/lib/profile'
+import { IS_CONNECT, proxyAuthCall, authHeaderFrom } from '@/lib/connect'
 
 // Current user's own profile — any authenticated role (master_admin, admin, user).
 export async function GET(req) {
+  if (IS_CONNECT) {
+    const { status, data } = await proxyAuthCall('/api/auth/me', { method: 'GET', authHeader: authHeaderFrom(req) })
+    const res = NextResponse.json(data, { status })
+    res.headers.set('Cache-Control', 'no-store')
+    return res
+  }
+
   const payload = await getUserFromRequest(req)
   if (!payload) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -25,6 +33,12 @@ export async function GET(req) {
 // requirement and wallet credits stay admin-managed (Admin → Users), never
 // editable by the account owner.
 export async function PATCH(req) {
+  if (IS_CONNECT) {
+    const body = await req.json()
+    const { status, data } = await proxyAuthCall('/api/auth/me', { method: 'PATCH', body, authHeader: authHeaderFrom(req) })
+    return NextResponse.json(data, { status })
+  }
+
   const payload = await getUserFromRequest(req)
   if (!payload) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 

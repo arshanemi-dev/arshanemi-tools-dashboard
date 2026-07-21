@@ -3,10 +3,16 @@ import { nanoid } from 'nanoid'
 import { getAdminFromRequest } from '@/lib/auth'
 import { getAllCompanies, createCompany, getCompanyByEmail } from '@/lib/db'
 import { initCompanyFolders } from '@/lib/media'
+import { IS_CONNECT, proxyAdminCall } from '@/lib/connect'
 
 export async function GET(req) {
   const admin = await getAdminFromRequest(req)
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  if (IS_CONNECT) {
+    const { status, data } = await proxyAdminCall('/api/admin/companies')
+    return NextResponse.json(data, { status })
+  }
 
   const companies = await getAllCompanies()
   return NextResponse.json({ companies })
@@ -16,7 +22,14 @@ export async function POST(req) {
   const admin = await getAdminFromRequest(req)
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { name, email, phone, website, address } = await req.json()
+  const body = await req.json()
+
+  if (IS_CONNECT) {
+    const { status, data } = await proxyAdminCall('/api/admin/companies', { method: 'POST', body })
+    return NextResponse.json(data, { status })
+  }
+
+  const { name, email, phone, website, address } = body
 
   if (!email?.trim()) {
     return NextResponse.json({ error: 'Company email is required' }, { status: 400 })

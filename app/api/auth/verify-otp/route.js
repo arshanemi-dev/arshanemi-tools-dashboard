@@ -1,9 +1,15 @@
 import { NextResponse } from 'next/server'
 import { verifyOTP } from '@/lib/db'
 import { signToken } from '@/lib/auth'
+import { IS_CONNECT, proxyAuthCall } from '@/lib/connect'
 
 export async function POST(req) {
   const { identifier, otpCode } = await req.json()
+
+  if (IS_CONNECT) {
+    const { status, data } = await proxyAuthCall('/api/auth/verify-otp', { body: { identifier, otpCode } })
+    return NextResponse.json(data, { status })
+  }
 
   if (!identifier || !otpCode) {
     return NextResponse.json({ error: 'Identifier and OTP are required' }, { status: 400 })

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Loader2, Mail, Phone, ArrowLeft, CheckCircle2 } from 'lucide-react'
 
 const OTP_SECONDS = 60
+const OTP_DISABLED = process.env.NEXT_PUBLIC_IS_OTP_Verifications_Disable === 'true'
 
 export default function ForgotPasswordPage() {
   const router = useRouter()
@@ -29,6 +30,28 @@ export default function ForgotPasswordPage() {
     setError('')
     if (!identifier.trim()) { setError('Please enter your ' + (method === 'email' ? 'email address' : 'mobile number')); return }
     setLoading(true)
+
+    // OTP disabled — skip straight to a bypassed verify-otp call for the
+    // resetToken (backend's verifyOTP() accepts any code unconditionally)
+    // instead of showing the 'otp' step at all.
+    if (OTP_DISABLED) {
+      try {
+        const res = await fetch('/api/auth/verify-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ identifier: identifier.trim(), otpCode: '000000' }),
+        })
+        const data = await res.json()
+        if (!res.ok) { setError(data.error || 'Could not verify identity'); return }
+        router.push(`/reset-password?token=${data.resetToken}`)
+      } catch {
+        setError('Network error — please try again')
+      } finally {
+        setLoading(false)
+      }
+      return
+    }
+
     try {
       const res = await fetch('/api/auth/send-otp', {
         method: 'POST',
@@ -137,7 +160,9 @@ export default function ForgotPasswordPage() {
               onClick={sendOTP} disabled={loading}
               className="w-full bg-accent hover:bg-accent-hover text-white font-semibold py-3 rounded-xl text-sm transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
             >
-              {loading ? <><Loader2 className="animate-spin" size={16} /> Sending OTP…</> : 'Send OTP'}
+              {loading
+                ? <><Loader2 className="animate-spin" size={16} /> {OTP_DISABLED ? 'Continuing…' : 'Sending OTP…'}</>
+                : OTP_DISABLED ? 'Continue' : 'Send OTP'}
             </button>
           </>
         )}

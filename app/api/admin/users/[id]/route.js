@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getStaffFromRequest } from '@/lib/auth'
 import { getUserById, updateUser, deleteUser, getUserByEmail, getUserByMobile, getCompanyById } from '@/lib/db'
+import { IS_CONNECT, proxyAdminCall } from '@/lib/connect'
 
 // Loads the target user and enforces company scoping for the 'admin' role.
 // Admins only ever manage plain 'user' accounts — never master_admin, and
@@ -22,10 +23,16 @@ export async function PATCH(req, { params }) {
   if (!staff) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await params
+  const body = await req.json()
+
+  if (IS_CONNECT) {
+    const { status, data } = await proxyAdminCall(`/api/admin/users/${id}`, { method: 'PATCH', body })
+    return NextResponse.json(data, { status })
+  }
+
   const { user: target, error } = await loadScopedTarget(staff, id)
   if (error) return error
 
-  const body = await req.json()
   const patch = {}
   if ('name' in body) patch.name = body.name?.trim()
   if ('mobile' in body) patch.mobile = body.mobile?.trim() || null
@@ -85,6 +92,11 @@ export async function DELETE(req, { params }) {
   const { id } = await params
   if (id === staff.userId) {
     return NextResponse.json({ error: 'You cannot delete your own account' }, { status: 400 })
+  }
+
+  if (IS_CONNECT) {
+    const { status, data } = await proxyAdminCall(`/api/admin/users/${id}`, { method: 'DELETE' })
+    return NextResponse.json(data, { status })
   }
 
   const { user: target, error } = await loadScopedTarget(staff, id)

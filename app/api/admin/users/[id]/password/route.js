@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs'
 import { getStaffFromRequest } from '@/lib/auth'
 import { getUserById, updateUserPassword } from '@/lib/db'
 import { validatePassword } from '@/lib/validation'
+import { IS_CONNECT, proxyAdminCall } from '@/lib/connect'
 
 // Direct administrator-set password reset — no OTP. Distinct from the
 // self-service OTP-gated flow used on the Profile page and admin login.
@@ -11,6 +12,13 @@ export async function PATCH(req, { params }) {
   if (!staff) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await params
+
+  if (IS_CONNECT) {
+    const body = await req.json()
+    const { status, data } = await proxyAdminCall(`/api/admin/users/${id}/password`, { method: 'PATCH', body })
+    return NextResponse.json(data, { status })
+  }
+
   const target = await getUserById(id)
   if (!target || target.role === 'master_admin') {
     return NextResponse.json({ error: 'User not found' }, { status: 404 })

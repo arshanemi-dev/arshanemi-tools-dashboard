@@ -1,9 +1,14 @@
 import { NextResponse } from 'next/server'
 import { revalidateTag } from 'next/cache'
 import { getItem, updateItem, deleteItem, getCollection } from '@/lib/db'
+import { IS_CONNECT, proxyAdminCall } from '@/lib/connect'
 
 export async function GET(req, { params }) {
   const { id } = await params
+  if (IS_CONNECT) {
+    const { status, data } = await proxyAdminCall(`/api/admin/blog-categories/${id}`)
+    return NextResponse.json(data, { status })
+  }
   const cat = await getItem('blog-categories', id)
   if (!cat) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   return NextResponse.json(cat)
@@ -12,6 +17,13 @@ export async function GET(req, { params }) {
 export async function PUT(req, { params }) {
   const { id } = await params
   const body = await req.json()
+
+  if (IS_CONNECT) {
+    const { status, data } = await proxyAdminCall(`/api/admin/blog-categories/${id}`, { method: 'PUT', body })
+    if (status < 300) revalidateTag('blog-categories')
+    return NextResponse.json(data, { status })
+  }
+
   const updated = await updateItem('blog-categories', id, body)
   if (!updated) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   revalidateTag('blog-categories')
@@ -20,6 +32,13 @@ export async function PUT(req, { params }) {
 
 export async function DELETE(req, { params }) {
   const { id } = await params
+
+  if (IS_CONNECT) {
+    const { status, data } = await proxyAdminCall(`/api/admin/blog-categories/${id}`, { method: 'DELETE' })
+    if (status < 300) revalidateTag('blog-categories')
+    return NextResponse.json(data, { status })
+  }
+
   const cat = await getItem('blog-categories', id)
   if (!cat) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 

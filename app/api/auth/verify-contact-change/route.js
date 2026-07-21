@@ -2,10 +2,17 @@ import { NextResponse } from 'next/server'
 import { getUserFromRequest } from '@/lib/auth'
 import { verifyOTP, updateUser, getCompanyById, getUserByEmail, getUserByMobile } from '@/lib/db'
 import { serializeProfile } from '@/lib/profile'
+import { IS_CONNECT, proxyAuthCall, authHeaderFrom } from '@/lib/connect'
 
 // Verifies the OTP sent by /api/auth/send-contact-otp for a NEW email/mobile,
 // then applies it to the logged-in user's own account.
 export async function POST(req) {
+  if (IS_CONNECT) {
+    const body = await req.json()
+    const { status, data } = await proxyAuthCall('/api/auth/verify-contact-change', { body, authHeader: authHeaderFrom(req) })
+    return NextResponse.json(data, { status })
+  }
+
   const payload = await getUserFromRequest(req)
   if (!payload) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 

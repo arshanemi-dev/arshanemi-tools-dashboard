@@ -7,7 +7,11 @@ import { ArrowRight, RefreshCw } from 'lucide-react';
 import { isLoggedIn, getStoredUser, authFetch, clearAuthTokens } from '@/lib/tokenStore';
 import { useCountUp } from '@/hooks/useCountUp';
 import DashboardTopbar from '@/components/dashboard/DashboardTopbar';
+import BottomMenu from '@/components/dashboard/BottomMenu';
 import ToolCard from '@/components/dashboard/ToolCard';
+
+const HEADER_HIDDEN = process.env.NEXT_PUBLIC_IS_Header_Hide === 'true';
+const BOTTOM_MENU_SHOWN = process.env.NEXT_PUBLIC_IS_Bottom_Menu === 'true';
 
 function StatTile({ label, value, delay = 0 }) {
   const count = useCountUp(typeof value === 'number' ? value : 0, 1200, typeof value === 'number');
@@ -96,9 +100,10 @@ export default function HomePage() {
 
   return (
     <div id="top" className="min-h-screen bg-background">
-      <DashboardTopbar user={user} onLogout={handleLogout} loggingOut={loggingOut} />
+      {!HEADER_HIDDEN && <DashboardTopbar user={user} onLogout={handleLogout} loggingOut={loggingOut} />}
+      {BOTTOM_MENU_SHOWN && <BottomMenu user={user} />}
 
-      <main className="pt-16">
+      <main className={HEADER_HIDDEN ? '' : 'pt-16'}>
         {/* HERO */}
         <section className="relative mx-auto max-w-7xl overflow-hidden px-5 pb-24 pt-20 text-center sm:px-8 sm:pb-32 sm:pt-28">
           <div className="hero-blob pointer-events-none absolute inset-x-0 top-0 -z-10 h-[32rem]" />

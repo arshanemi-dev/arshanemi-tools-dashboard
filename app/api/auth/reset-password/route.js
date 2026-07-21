@@ -3,12 +3,18 @@ import bcrypt from 'bcryptjs'
 import { verifyToken } from '@/lib/auth'
 import { getUserByEmail, getUserByMobile, updateUserPassword } from '@/lib/db'
 import { validatePassword } from '@/lib/validation'
+import { IS_CONNECT, proxyAuthCall } from '@/lib/connect'
 
 export async function POST(req) {
   const { token, password } = await req.json()
 
   if (!token || !password) {
     return NextResponse.json({ error: 'Token and new password are required' }, { status: 400 })
+  }
+
+  if (IS_CONNECT) {
+    const { status, data } = await proxyAuthCall('/api/auth/reset-password', { body: { token, password } })
+    return NextResponse.json(data, { status })
   }
 
   const pwError = validatePassword(password)

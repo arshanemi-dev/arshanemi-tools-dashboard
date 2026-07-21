@@ -4,8 +4,13 @@ import { revalidateTag } from 'next/cache'
 import { getSingleton, updateSingleton } from '@/lib/db'
 import { verifyToken } from '@/lib/auth'
 import { defaultTheme } from '@/data/defaultTheme'
+import { IS_CONNECT, proxyAdminCall } from '@/lib/connect'
 
 export async function GET() {
+  if (IS_CONNECT) {
+    const { status, data } = await proxyAdminCall('/api/admin/theme')
+    return NextResponse.json(data, { status, headers: { 'Cache-Control': 'no-store' } })
+  }
   try {
     const saved = await getSingleton('theme')
     const theme = saved && Object.keys(saved).length > 0 ? saved : defaultTheme
@@ -28,6 +33,13 @@ export async function PUT(req) {
     if (!body?.dark || !body?.light || !body?.typography || !body?.borderRadius) {
       return NextResponse.json({ error: 'Invalid theme payload' }, { status: 400 })
     }
+
+    if (IS_CONNECT) {
+      const { status, data } = await proxyAdminCall('/api/admin/theme', { method: 'PUT', body })
+      if (status < 300) revalidateTag('theme')
+      return NextResponse.json(data, { status })
+    }
+
     await updateSingleton('theme', body)
     revalidateTag('theme')
     return NextResponse.json({ ok: true })
@@ -43,6 +55,13 @@ export async function DELETE(req) {
     if (!token || !(await verifyToken(token))) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    if (IS_CONNECT) {
+      const { status, data } = await proxyAdminCall('/api/admin/theme', { method: 'DELETE' })
+      if (status < 300) revalidateTag('theme')
+      return NextResponse.json(data, { status })
+    }
+
     await updateSingleton('theme', defaultTheme)
     revalidateTag('theme')
     return NextResponse.json({ ok: true })

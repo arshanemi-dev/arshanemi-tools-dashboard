@@ -3,14 +3,26 @@ import { revalidateTag } from 'next/cache'
 import { getCollection, saveCollection } from '@/lib/db'
 import { isSlugTaken, generateBlogSlug, estimateReadTime } from '@/lib/blog'
 import { nanoid } from 'nanoid'
+import { IS_CONNECT, proxyAdminCall } from '@/lib/connect'
 
 export async function GET() {
+  if (IS_CONNECT) {
+    const { status, data } = await proxyAdminCall('/api/admin/blogs')
+    return NextResponse.json(data, { status })
+  }
   const blogs = await getCollection('blogs')
   return NextResponse.json(blogs)
 }
 
 export async function POST(req) {
   const body = await req.json()
+
+  if (IS_CONNECT) {
+    const { status, data } = await proxyAdminCall('/api/admin/blogs', { method: 'POST', body })
+    if (status < 300) revalidateTag('blogs')
+    return NextResponse.json(data, { status })
+  }
+
   const { title, slug: rawSlug, content = [], status = 'draft', ...rest } = body
 
   const slug = rawSlug || generateBlogSlug(title || '')

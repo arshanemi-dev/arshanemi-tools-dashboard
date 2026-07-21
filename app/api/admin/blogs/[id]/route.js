@@ -3,9 +3,16 @@ import { revalidateTag } from 'next/cache'
 import { getItem, updateItem, deleteItem, getCollection } from '@/lib/db'
 import { isSlugTaken, estimateReadTime } from '@/lib/blog'
 import { deleteImage } from '@/lib/upload'
+import { IS_CONNECT, proxyAdminCall } from '@/lib/connect'
 
 export async function GET(req, { params }) {
   const { id } = await params
+
+  if (IS_CONNECT) {
+    const { status, data } = await proxyAdminCall(`/api/admin/blogs/${id}`)
+    return NextResponse.json(data, { status })
+  }
+
   const post = await getItem('blogs', id)
   if (!post) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   return NextResponse.json(post)
@@ -14,6 +21,16 @@ export async function GET(req, { params }) {
 export async function PUT(req, { params }) {
   const { id } = await params
   const body = await req.json()
+
+  if (IS_CONNECT) {
+    const { status, data } = await proxyAdminCall(`/api/admin/blogs/${id}`, { method: 'PUT', body })
+    if (status < 300) {
+      revalidateTag('blogs')
+      if (data?.slug) revalidateTag(`blog-${data.slug}`)
+    }
+    return NextResponse.json(data, { status })
+  }
+
   const { slug, content = [], ...rest } = body
 
   const existing = await getItem('blogs', id)
@@ -37,6 +54,14 @@ export async function PUT(req, { params }) {
 
 export async function DELETE(req, { params }) {
   const { id } = await params
+
+  if (IS_CONNECT) {
+    // No local record for image cleanup — see [collection]/[id]/route.js DELETE for the same reasoning.
+    const { status, data } = await proxyAdminCall(`/api/admin/blogs/${id}`, { method: 'DELETE' })
+    if (status < 300) revalidateTag('blogs')
+    return NextResponse.json(data, { status })
+  }
+
   const post = await getItem('blogs', id)
   if (!post) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 

@@ -1,8 +1,9 @@
 /**
  * Arshanemi Tools Dashboard — PostgreSQL Seed Script
- * Seeds company info into Supabase layout_settings table (tools go into
- * their own `tools` table instead — see scripts/tools_table_migration.sql) +
- * creates default users.
+ * Seeds company info into the Supabase layout_settings table, or as a JSON
+ * file in Vercel Blob when NEXT_PUBLIC_IS_JSON_SAVED_DATA=true — see
+ * lib/blobStore.js (tools go into their own `tools` table either way — see
+ * scripts/tools_table_migration.sql) + creates default users.
  *
  * This app is a lean tools dashboard (no marketing site), so unlike the main
  * Arshanemi site's seed script it only seeds the collections this app's
@@ -37,7 +38,20 @@ function getSupabase() {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
+// Mirrors lib/db.js's readSetting/writeSetting branch — this script writes
+// directly to Supabase rather than importing lib/db.js, so it needs its own
+// copy of the same NEXT_PUBLIC_IS_JSON_SAVED_DATA check to stay in sync with
+// whichever backend the running app is actually reading from.
+const IS_JSON_SAVED_DATA = process.env.NEXT_PUBLIC_IS_JSON_SAVED_DATA === 'true'
+
 async function upsertSetting(supabase, key, value) {
+  if (IS_JSON_SAVED_DATA) {
+    const { writeBlobJson } = await imp('lib/blobStore.js')
+    await writeBlobJson(key, value)
+    const count = Array.isArray(value) ? `${value.length} items` : 'singleton'
+    console.log(`  ✓ ${key} (${count}) [Blob JSON]`)
+    return
+  }
   const { error } = await supabase
     .from('layout_settings')
     .upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: 'key' })

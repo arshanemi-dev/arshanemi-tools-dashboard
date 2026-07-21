@@ -3,10 +3,23 @@ import bcrypt from 'bcryptjs'
 import { getStaffFromRequest } from '@/lib/auth'
 import { getAllUsers, getUserByEmail, getUserByMobile, getCompanyById, createUser, createUserSettings } from '@/lib/db'
 import { validatePassword } from '@/lib/validation'
+import { IS_CONNECT, proxyAdminCall } from '@/lib/connect'
 
 export async function GET(req) {
   const staff = await getStaffFromRequest(req)
   if (!staff) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  if (IS_CONNECT) {
+    const { status, data } = await proxyAdminCall('/api/admin/users')
+    // proxyAdminCall always authenticates as the service-level ADMIN_API_TOKEN
+    // (master_admin), so root returns the full unscoped list regardless of
+    // who's actually asking — re-apply this app's own company-scoping to the
+    // response the same way the local branch below does.
+    const scoped = staff.role === 'admin' && Array.isArray(data)
+      ? data.filter((u) => u.companyId === staff.companyId && u.role === 'user')
+      : data
+    return NextResponse.json(scoped, { status })
+  }
 
   // Company-scoped admins only ever manage plain 'user' accounts in their own
   // company, never fellow admins — master_admin still sees every role.
@@ -22,6 +35,12 @@ export async function POST(req) {
   if (!staff) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json()
+
+  if (IS_CONNECT) {
+    const { status, data } = await proxyAdminCall('/api/admin/users', { method: 'POST', body })
+    return NextResponse.json(data, { status })
+  }
+
   let { name, email, mobile, password, role, companyId, otpEnabled, address1, address2, walletCreditsTotal } = body
 
   if (!name?.trim()) return NextResponse.json({ error: 'Name is required' }, { status: 400 })
